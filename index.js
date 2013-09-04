@@ -6,6 +6,7 @@ var _ = require('underscore')
 
 var through = require('through');
 var browserify = require('browserify');
+var brfs = require('brfs');
 var async = require('async');
 var concat = require('concat-stream');
 var CombinedStream = require('combined-stream');
@@ -105,7 +106,7 @@ function build(entry, opts, buildCb) {
         var out = fs.createWriteStream('build/index.js');
         entry = path.resolve(entry);
         var b = browserify();
-        b.transform('brfs');
+        b.transform(brfs);
         b.add(entry);
 cb
         var bundle = b.bundle({
@@ -122,7 +123,7 @@ cb
         console.log('\nAll done! Bundled bunt and dependencies are in ./%s',
             path.relative(process.cwd(), buildDir));
 
-        buildCb();
+        if(buildCb) buildCb();
       }
 
     ]);
