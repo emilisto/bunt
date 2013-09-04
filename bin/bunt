@@ -1,0 +1,43 @@
+#!/usr/bin/env node
+
+var through = require('through');
+var path = require('path');
+var concat = require('concat-stream');
+var JSONStream = require('JSONStream');
+
+var bunt = require('../');
+
+var USAGE = "Syntax: $0 [command]\n\n"
+  + "To build the bunt in $(cwd), do \n\n"
+  + "  $ bunt build\n"
+  + "\nCommands:\n\n"
+  + "  build <module>\tbuilds <module>\n"
+  + "  inspect <module>\tlists dependencies of <module>\n"
+  + "  watch <module>\twatches for file changes in <module> and performs build";
+
+var optimist = require('optimist')
+  .usage(USAGE)
+  .describe('global-name', 'Name of the single global that will be exported')
+  .describe('debug', 'Run browserify in debug mode, producing source maps')
+  .alias('debug', 'd')
+  .alias('global-name', 'g')
+  .default('debug', false);
+
+var command = optimist.demand(1).argv._[0];
+var entry = optimist.argv._[1] || '.';
+
+switch(command) {
+  case "inspect":
+    console.log('Dependent bunt for %s:', entry);
+    var deps = bunt.findDependencies(entry)
+      .pipe(through(function(dep) {
+        var relpath = path.relative(process.cwd(), path.dirname(dep.pkg));
+        console.log('  - %s (./%s)', dep.pkgfile.name, relpath);
+      }))
+    break;
+  case "build":
+    bunt.build(entry, optimist.argv);
+    break;
+  default:
+    optimist.showHelp();
+}
