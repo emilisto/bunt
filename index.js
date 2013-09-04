@@ -1,7 +1,8 @@
 var exec = require('child_process').exec;
 var path = require('path');
 var fs = require('fs.extra');
-var util = require("util")
+var util = require('util')
+var _ = require('underscore')
 
 var through = require('through');
 var browserify = require('browserify');
@@ -33,9 +34,16 @@ function findDependencies(entry) {
     }))
 };
 
-function build(entry, opts) {
+function build(entry, opts, buildCb) {
 
   opts = opts || {};
+
+  // FIXME: on errors, call `buildCb` with the error
+
+  if(_.isFunction(opts)) {
+    buildCb = opts;
+    opts = {};
+  }
 
   var buildDir = path.resolve('build');
 
@@ -99,7 +107,7 @@ function build(entry, opts) {
         var b = browserify();
         b.transform('brfs');
         b.add(entry);
-
+cb
         var bundle = b.bundle({
           debug: !!opts.debug,
           standalone: opts['global-name'] || rootPackage.name
@@ -113,6 +121,8 @@ function build(entry, opts) {
         // TODO: print total bundle size and list of assets
         console.log('\nAll done! Bundled bunt and dependencies are in ./%s',
             path.relative(process.cwd(), buildDir));
+
+        buildCb();
       }
 
     ]);
