@@ -31,6 +31,14 @@ To create a system that conforms to these principles, one needs
 As I believe in inventing as little as possible, Bunt solves only
 3. and uses npm for package management and browserify for bundling.
 
+## Requirements for a bunt-compliant module
+
+1. there is a `package.json` that
+  - contains a field `"bunt": true"`
+  - contains a script called `bunt-assets`
+  - has a `main` field that points to a JavaScript file
+2. Running `npm run-script bunt-build-assets` will put resulting files
+in `./build/` directory, where `.` denotes the module root.
 
 ## Todo
 

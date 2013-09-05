@@ -139,7 +139,7 @@ cb
 
     async.series([
       function prepublish(cb) {
-        var child = exec('npm run-script prepublish', {
+        var child = exec('npm run-script bunt', {
           cwd: dir
         }, function (error, stdout, stderr) {
           if (error !== null) {
