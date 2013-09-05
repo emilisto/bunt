@@ -52,6 +52,10 @@ function build(entry, opts, buildCb) {
 
     var rootPackage = _pkgfile;
 
+    if(!validatePackage(rootPackage)) {
+      return buildCb(new Error('invalid package'));
+    }
+
     console.log('Building %s\n', rootPackage.name);
 
     async.waterfall([
@@ -76,7 +80,7 @@ function build(entry, opts, buildCb) {
         console.log('  - concatenating stylesheets');
 
         // options is optional
-        glob(path.join(buildDir, "**/*.css"), function (er, files) {
+        glob(path.join(buildDir, "**/*.css"), function (err, files) {
           var combinedStream = CombinedStream.create();
           combinedStream.append('/* Styles concatenated using bunt */\n');
 
@@ -108,7 +112,7 @@ function build(entry, opts, buildCb) {
         var b = browserify();
         b.transform(brfs);
         b.add(entry);
-cb
+
         var bundle = b.bundle({
           debug: !!opts.debug,
           standalone: opts['global-name'] || rootPackage.name
@@ -118,15 +122,10 @@ cb
           .on('end', cb)
           .pipe(out);
       },
-      function done() {
-        // TODO: print total bundle size and list of assets
-        console.log('\nAll done! Bundled bunt and dependencies are in ./%s',
-            path.relative(process.cwd(), buildDir));
 
-        if(buildCb) buildCb();
-      }
-
-    ]);
+    ], function(err) {
+      buildCb(err, buildDir);
+    });
 
   });
 
@@ -139,12 +138,10 @@ cb
 
     async.series([
       function prepublish(cb) {
-        var child = exec('npm run-script bunt', {
+        var child = exec('npm run-script bunt-build-assets', {
           cwd: dir
-        }, function (error, stdout, stderr) {
-          if (error !== null) {
-            console.log('exec error: ' + error);
-          }
+        }, function(err) {
+          if(err) return cb(new Error('`npm run-script bunt-build-assets` failed:\n' + err));
           cb();
         });
       },
@@ -156,8 +153,7 @@ cb
 
         fs.copyRecursive(pkgBuildDir, dst, cb);
       }
-    ]);
-
+    ], cb);
 
     // TODO:
     // 1. create a directory A in the build/ directory for the bunt
@@ -167,7 +163,21 @@ cb
 
 };
 
+function validatePackage(pkg) {
+  if(pkg.bunt !== true) {
+    console.error('package must have a bunt field equal to true');
+    return false;
+  }
+  if(!pkg.scripts || !pkg.scripts['bunt-build-assets']) {
+    console.error('package must have a script called "bunt-build-assets"');
+    return false;
+  }
+
+  return true;
+};
+
 module.exports = {
   findDependencies: findDependencies,
+  validatePackage: validatePackage,
   build: build
 };

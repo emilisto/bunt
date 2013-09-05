@@ -20,6 +20,7 @@ var optimist = require('optimist')
   .describe('global-name', 'Name of the single global that will be exported')
   .describe('debug', 'Run browserify in debug mode, producing source maps')
   .alias('debug', 'd')
+  .alias('verbose', 'v')
   .alias('global-name', 'g')
   .default('debug', false);
 
@@ -36,7 +37,17 @@ switch(command) {
       }))
     break;
   case "build":
-    bunt.build(entry, optimist.argv);
+    bunt.build(entry, optimist.argv, function(err, buildDir) {
+      if(err) {
+        console.log('\nbuild failed:\n\n%s', err);
+        console.log('Exiting.');
+        return
+      } else {
+        console.log('\nAll done! Bundled bunt and dependencies are in ./%s',
+            path.relative(process.cwd(), buildDir));
+      }
+
+    });
     break;
   default:
     optimist.showHelp();
